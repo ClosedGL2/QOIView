@@ -5,6 +5,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
+#include "imageload.h"
+
 #define DEBUG 0
 
 int main(int argc, char** argv);
@@ -17,6 +19,7 @@ void cleanup();
 // texture
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
+SDL_Surface *surface = NULL;
 SDL_Texture *texture = NULL;
 SDL_Rect src = {0};
 
@@ -32,7 +35,7 @@ main(int argc, char** argv)
 	// quit if file not specified
 	if(argc < 2)
 	{
-		fprintf(stderr, "Please provide a filename (or '-' to read from stdin).\n");
+		fprintf(stderr, "Please provide a filename.\n");
 		return 1;
 	}
 
@@ -53,6 +56,18 @@ main(int argc, char** argv)
 	char* windowtitle = malloc(sizeof(char) * (11 + strlen(strcmp(argv[1], "-") ? argv[1] : "stdin"))); // +11 for length of "QOIView - "
 	sprintf(windowtitle, "QOIView - %s", strcmp(argv[1], "-") ? argv[1] : "stdin");
 
+	// open image file
+	SDL_RWops* img;
+	img = SDL_RWFromFile(argv[1], "rb");
+
+	// load image
+	surface = LoadImageIntoSurface(img);
+	if (!surface) {
+		SDL_FreeRW(img);
+		fprintf(stderr, "Problem while loading the image: (%s).\n", argv[1]);
+		return 1;
+	}
+
 	// get screen dimensions - 50
 	SDL_DisplayMode dm;
 	SDL_GetCurrentDisplayMode(0, &dm);
@@ -62,31 +77,16 @@ main(int argc, char** argv)
 	// create window
 	window = SDL_CreateWindow(
 			windowtitle,
-			SDL_WINDOWPOS_UNDEFINED,
-			SDL_WINDOWPOS_UNDEFINED,
-			640, 480,
+			SDL_WINDOWPOS_CENTERED,
+			SDL_WINDOWPOS_CENTERED,
+			surface->w, surface->h,
 			SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 	);
 	free(windowtitle);
 
 	// create renderer
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_TARGETTEXTURE);
-
-	// open image file
-	// if argument is "-", will load from stdin
-	SDL_RWops* img;
-	if (!strcmp(argv[1], "-"))
-		img = SDL_RWFromFP(stdin, 0);
-	else
-		img = SDL_RWFromFile(argv[1], "rb");
-
-	// load image into texture
-	texture = IMG_LoadTexture_RW(renderer, img, 0);
-	if (!texture) {
-		SDL_FreeRW(img);
-		fprintf(stderr, "Problem while loading the image: (%s).\n", argv[1]);
-		return 1;
-	}
+	texture = SDL_CreateTextureFromSurface(renderer, surface);
 
 	SDL_FreeRW(img);
 
