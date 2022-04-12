@@ -1,7 +1,7 @@
-all:	osxiv
+all:	qoiview
 
-osxiv:
-	gcc main.c -Wall -lSDL2 -lSDL2_image -lm -o osxiv
+qoiview:
+	gcc main.c -Wall -lSDL2 -lSDL2_image -lm -o qoiview
 
 clean:
-	@rm osxiv
+	@rm qoiview
