@@ -1,13 +1,13 @@
-# QOIView
+# SQIV
 
-A simple image viewer that supports the [Quite OK Image Format](https://qoiformat.org/) using my own implementation of a QOI encoder/decoder
+Simple QOI Image Viewer that supports popular image formats and the [Quite OK Image Format](https://qoiformat.org/) using my own implementation of a QOI encoder/decoder
 
 Forked from [Baitinq's OSXIV](https://github.com/Baitinq/OSXIV)
 
 ## Usage
 
 ```
-./qoiview path_to_img
+./sqiv path_to_img
 ```
 
 ## Compilation

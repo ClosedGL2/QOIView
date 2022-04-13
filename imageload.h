@@ -1,5 +1,5 @@
-#ifndef qoiview_imageload
-#define qoiview_imageload
+#ifndef sqiv_imageload
+#define sqiv_imageload
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -41,4 +41,4 @@ typedef struct {
 #define amask 0xff000000
 #endif
 
-#endif // qoiview_imageload
+#endif // sqiv_imageload

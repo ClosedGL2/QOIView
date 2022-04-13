@@ -37,7 +37,6 @@ SDL_Surface* LoadQOI(SDL_RWops* img)
 	long int index = 0;
 
 	Pixel pixel = {0, 0, 0, 255};
-	Pixel last_pixel = {0, 0, 0, 255};
 
 	Pixel array[64] = {0};
 	uint8_t index_position;
@@ -125,18 +124,18 @@ SDL_Surface* LoadQOI(SDL_RWops* img)
 			index++;
 			break;
 		case QOI_OP_DIFF: // small difference from last pixel
-			pixel.r = last_pixel.r + (((byte & 0x30) >> 4) - 2);
-			pixel.g = last_pixel.g + (((byte & 0x0c) >> 2) - 2);
-			pixel.b = last_pixel.b + ((byte & 0x03) - 2);
+			pixel.r += (((byte & 0x30) >> 4) - 2);
+			pixel.g += (((byte & 0x0c) >> 2) - 2);
+			pixel.b += ((byte & 0x03) - 2);
 			buf[index] = SDL_MapRGBA(pix_fmt, pixel.r, pixel.g, pixel.b, pixel.a);
 			index++;
 			break;
 		case QOI_OP_LUMA: // large difference from last pixel
 			j = (byte & 0x3f) - 32;
-			pixel.g = last_pixel.g + j;
+			pixel.g += j;
 			SDL_RWread(img, &byte, 1, 1);
-			pixel.r = last_pixel.r + ((((byte & 0xf0) >> 4) - 8) + j);
-			pixel.b = last_pixel.b + (((byte & 0x0f) - 8) + j);
+			pixel.r += ((((byte & 0xf0) >> 4) - 8) + j);
+			pixel.b += (((byte & 0x0f) - 8) + j);
 			buf[index] = SDL_MapRGBA(pix_fmt, pixel.r, pixel.g, pixel.b, pixel.a);
 			index++;
 			break;
@@ -148,12 +147,6 @@ SDL_Surface* LoadQOI(SDL_RWops* img)
 		array[index_position].g = pixel.g;
 		array[index_position].b = pixel.b;
 		array[index_position].a = pixel.a;
-
-		// set last pixel value
-		last_pixel.r = pixel.r;
-		last_pixel.g = pixel.g;
-		last_pixel.b = pixel.b;
-		last_pixel.a = pixel.a;
 	}
 
 	// check for end marking

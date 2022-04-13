@@ -53,8 +53,8 @@ main(int argc, char** argv)
 	atexit(cleanup);
 
 	// generate window title
-	char* windowtitle = malloc(sizeof(char) * (11 + strlen(strcmp(argv[1], "-") ? argv[1] : "stdin"))); // +11 for length of "QOIView - "
-	sprintf(windowtitle, "QOIView - %s", strcmp(argv[1], "-") ? argv[1] : "stdin");
+	char* windowtitle = malloc(sizeof(char) * (8 + strlen(argv[1]))); // +8 for length of "SQIV - "
+	sprintf(windowtitle, "SQIV - %s", strcmp(argv[1], "-") ? argv[1] : "stdin");
 
 	// open image file
 	SDL_RWops* img;
