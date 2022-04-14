@@ -40,7 +40,7 @@ main(int argc, char** argv)
 	}
 
 	// quit if file doesn't exist
-	if(strcmp(argv[1], "-") && access(argv[1], F_OK ) == -1)
+	if (access(argv[1], F_OK) == -1)
 	{
 		fprintf(stderr, "Filename doesnt exist.\n");
 		return 1;
@@ -54,7 +54,7 @@ main(int argc, char** argv)
 
 	// generate window title
 	char* windowtitle = malloc(sizeof(char) * (8 + strlen(argv[1]))); // +8 for length of "SQIV - "
-	sprintf(windowtitle, "SQIV - %s", strcmp(argv[1], "-") ? argv[1] : "stdin");
+	sprintf(windowtitle, "SQIV - %s", argv[1]);
 
 	// open image file
 	SDL_RWops* img;
@@ -226,7 +226,7 @@ handle_events()
 						move_y = 0.0;
 						render();
 						break;
-					case 'q':
+					case 'q': // quit
 						exit(0);
 				}
 				break;

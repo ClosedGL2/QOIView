@@ -29,26 +29,33 @@ uint8_t is_qoi_image(SDL_RWops* img)
 SDL_Surface* LoadQOI(SDL_RWops* img)
 {
 	SDL_Surface* surface;
-	SDL_PixelFormat* pix_fmt;
-	uint32_t* buf;
+	Pixel* buf;
 
 	QOIHeader header;
-	long int total_pixels;
-	long int index = 0;
+	unsigned int total_pixels;
+	unsigned int index = 0;
 
-	Pixel pixel = {0, 0, 0, 255};
+	Pixel pixel;
+	pixel.r = 0;
+	pixel.g = 0;
+	pixel.b = 0;
+	pixel.a = 255;
 
 	Pixel array[64] = {0};
 	uint8_t index_position;
 
 	uint8_t byte;
-	uint8_t run, j;
-	uint32_t run_color;
+	uint8_t run = 1;
+	uint8_t dg;
 
 	// load header
 	SDL_RWread(img, &header.magic, 4, 1);
 
-	// all this effort into reading so my CPU could understand it
+	// all this effort into reading so my little-endian CPU could understand it
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+	SDL_RWread(img, &header.width, 4, 1);
+	SDL_RWread(img, &header.height, 4, 1);
+#else
 	SDL_RWread(img, &byte, 1, 1);
 	header.width = byte << 24;
 	SDL_RWread(img, &byte, 1, 1);
@@ -66,6 +73,7 @@ SDL_Surface* LoadQOI(SDL_RWops* img)
 	header.height |= byte << 8;
 	SDL_RWread(img, &byte, 1, 1);
 	header.height |= byte;
+#endif
 
 	SDL_RWread(img, &header.channels, 1, 1);
 	SDL_RWread(img, &header.colorspace, 1, 1);
@@ -84,7 +92,6 @@ SDL_Surface* LoadQOI(SDL_RWops* img)
 	}
 
 	buf = surface->pixels;
-	pix_fmt = surface->format;
 
 	// decode image
 	while (index < total_pixels) {
@@ -97,60 +104,46 @@ SDL_Surface* LoadQOI(SDL_RWops* img)
 			switch (byte) {
 			case QOI_OP_RGB: // RGB pixel value
 				SDL_RWread(img, &pixel, 3, 1);
-				buf[index] = SDL_MapRGBA(pix_fmt, pixel.r, pixel.g, pixel.b, pixel.a);
-				index++;
 				break;
 			case QOI_OP_RGBA: // RGBA pixel value
 				SDL_RWread(img, &pixel, 4, 1);
-				buf[index] = SDL_MapRGBA(pix_fmt, pixel.r, pixel.g, pixel.b, pixel.a);
-				index++;
 				break;
 			default: // Run-length encoding
 				run = (byte & 0x3f) + 1;
-				run_color = SDL_MapRGBA(pix_fmt, pixel.r, pixel.g, pixel.b, pixel.a);
-				for (j = 0; j < run; j++) {
-					buf[index] = run_color;
-					index++;
-				}
 				break;
 			}
 			break;
 		case QOI_OP_INDEX: // index previously seen color
-			pixel.r = array[byte].r;
-			pixel.g = array[byte].g;
-			pixel.b = array[byte].b;
-			pixel.a = array[byte].a;
-			buf[index] = SDL_MapRGBA(pix_fmt, pixel.r, pixel.g, pixel.b, pixel.a);
-			index++;
+			pixel = array[byte];
 			break;
 		case QOI_OP_DIFF: // small difference from last pixel
 			pixel.r += (((byte & 0x30) >> 4) - 2);
 			pixel.g += (((byte & 0x0c) >> 2) - 2);
 			pixel.b += ((byte & 0x03) - 2);
-			buf[index] = SDL_MapRGBA(pix_fmt, pixel.r, pixel.g, pixel.b, pixel.a);
-			index++;
 			break;
 		case QOI_OP_LUMA: // large difference from last pixel
-			j = (byte & 0x3f) - 32;
-			pixel.g += j;
+			dg = (byte & 0x3f) - 32;
+			pixel.g += dg;
 			SDL_RWread(img, &byte, 1, 1);
-			pixel.r += ((((byte & 0xf0) >> 4) - 8) + j);
-			pixel.b += (((byte & 0x0f) - 8) + j);
-			buf[index] = SDL_MapRGBA(pix_fmt, pixel.r, pixel.g, pixel.b, pixel.a);
-			index++;
+			pixel.r += ((((byte & 0xf0) >> 4) - 8) + dg);
+			pixel.b += (((byte & 0x0f) - 8) + dg);
 			break;
 		}
 
+		// draw pixel
+		for (;run > 0;run--) {
+			buf[index] = pixel;
+			index++;
+		}
+		run = 1;
+
 		// add pixel to array
 		index_position = ((pixel.r * 3) + (pixel.g * 5) + (pixel.b * 7) + (pixel.a * 11)) % 64;
-		array[index_position].r = pixel.r;
-		array[index_position].g = pixel.g;
-		array[index_position].b = pixel.b;
-		array[index_position].a = pixel.a;
+		array[index_position] = pixel;
 	}
 
-	// check for end marking
-	for (j = 0; j < 7; j++) {
+	// check for end magic
+	for (run = 0; run < 7; run++) {
 		SDL_RWread(img, &byte, 1, 1);
 		if (byte != 0) return NULL;
 	}
