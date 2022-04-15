@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <stdint.h>
+#include <stdio.h>
 
 SDL_Surface* LoadImageIntoSurface(SDL_RWops* img);
 
@@ -28,6 +29,7 @@ typedef struct {
 #define QOI_OP_INDEX	0x00
 #define QOI_OP_DIFF		0x40
 #define QOI_OP_LUMA		0x80
+#define QOI_OP_RUN		0xc0
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define rmask 0xff000000

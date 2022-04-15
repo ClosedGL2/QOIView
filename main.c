@@ -59,11 +59,15 @@ main(int argc, char** argv)
 	// open image file
 	SDL_RWops* img;
 	img = SDL_RWFromFile(argv[1], "rb");
+	if (!img) {
+		fprintf(stderr, "Could not open file: %s\n", SDL_GetError());
+		return 1;
+	}
 
 	// load image
 	surface = LoadImageIntoSurface(img);
+	SDL_FreeRW(img);
 	if (!surface) {
-		SDL_FreeRW(img);
 		fprintf(stderr, "Problem while loading the image: (%s).\n", argv[1]);
 		return 1;
 	}
@@ -87,8 +91,6 @@ main(int argc, char** argv)
 	// create renderer
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_TARGETTEXTURE);
 	texture = SDL_CreateTextureFromSurface(renderer, surface);
-
-	SDL_FreeRW(img);
 
 	// resize window to image size
 	SDL_QueryTexture(texture, NULL, NULL, &src.w , &src.h);
